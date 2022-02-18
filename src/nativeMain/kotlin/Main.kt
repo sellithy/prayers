@@ -16,7 +16,7 @@ fun main() {
     println(readAllText(path))
 }
 
-// This is C put in kotlin
+// This is C but in kotlin
 fun readAllText(filePath: String) =
     fopen(filePath, "r")!!.let {
         fseek(it, 0, SEEK_END)
