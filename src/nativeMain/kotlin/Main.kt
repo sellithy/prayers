@@ -17,6 +17,7 @@ fun main() {
 }
 
 // This is C but in kotlin
+// Translated from https://stackoverflow.com/a/70409447/6554077 without the error checking
 fun readAllText(filePath: String) =
     fopen(filePath, "r")!!.let {
         fseek(it, 0, SEEK_END)
