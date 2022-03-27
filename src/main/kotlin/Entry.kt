@@ -5,11 +5,11 @@ import Prayer.*
 
 
 @Serializable
-enum class PrayerStatus { NOTDONE, ONTIME, OFFTIME}
+enum class PrayerStatus { NOT_DONE, ON_TIME, OFF_TIME}
 
 @Serializable
-data class Entry(val fajr: PrayerStatus = NOTDONE, val zuhr: PrayerStatus = NOTDONE, val asr: PrayerStatus = NOTDONE,
-                 val maghreb: PrayerStatus = NOTDONE, val isha: PrayerStatus = NOTDONE)
+data class Entry(val fajr: PrayerStatus = NOT_DONE, val zuhr: PrayerStatus = NOT_DONE, val asr: PrayerStatus = NOT_DONE,
+                 val maghreb: PrayerStatus = NOT_DONE, val isha: PrayerStatus = NOT_DONE)
 
 operator fun Entry.get(prayer: Prayer) = when(prayer) {
     FAJR -> fajr

@@ -1,8 +1,12 @@
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.MutuallyExclusiveGroupException
+import com.github.ajalt.clikt.core.PrintMessage
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.convert
-import com.github.ajalt.clikt.parameters.options.*
+import com.github.ajalt.clikt.parameters.options.convert
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.file
 import kotlinx.datetime.*
 import kotlinx.serialization.json.Json
@@ -17,7 +21,7 @@ private val yesterday = today - DatePeriod(days = 1)
 class Hello : CliktCommand() {
     private val prayersInput: List<Pair<Prayer, PrayerStatus>> by argument(help = "The prayers that were prayed. Uppercase for offtime prayers. Only the last letter for each prayer is counted. Format: [fFZzAamMIi]*").convert { input ->
         input.map {
-            it.toPrayer() to if (it.isUpperCase()) PrayerStatus.OFFTIME else PrayerStatus.ONTIME
+            it.toPrayer() to if (it.isUpperCase()) PrayerStatus.OFF_TIME else PrayerStatus.ON_TIME
         }
     }
 
@@ -52,28 +56,37 @@ class Hello : CliktCommand() {
                 throw MutuallyExclusiveGroupException(this)
         }
 
+
     override fun run() {
         ensureCorrectFlags()
 
         val dateToEntry = Json.decodeFromStream<MutableMap<LocalDate, Entry>>(path.inputStream())
         val lastDay = dateToEntry.keys.maxOf { it }
 
-        fun copyPrayer(day: LocalDate, prayer: Prayer, status: PrayerStatus) =
-            dateToEntry.set(day, dateToEntry[day]!!.copy(prayer, status))
+        fun assignPrayer(day: LocalDate, prayer: Prayer, status: PrayerStatus) {
+            val entry = dateToEntry[day]!!
+            if (entry[prayer] != PrayerStatus.NOT_DONE && entry[prayer] != status)
+                throw PrintMessage(
+                    "Cannot reassign a prayer. day: $day, prayer: $prayer from ${entry[prayer]} to $status",
+                    error = true
+                )
+
+            dateToEntry[day] = entry.copy(prayer, status)
+        }
 
         // Add empty entries
         (lastDay.nextDay()..today).forEach { dateToEntry[it] = Entry() }
 
         if (!unspecifiedFlag)
             prayersInput.forEach { (prayer, status) ->
-                copyPrayer(dayInput ?: if (yesterdayFlag) yesterday else today, prayer, status)
+                assignPrayer(dayInput ?: if (yesterdayFlag) yesterday else today, prayer, status)
             }
         else
             prayersInput.forEach { (prayer, _) ->
                 dateToEntry.firstNotNullOfOrNull { (date, entry) ->
-                    if (entry[prayer] == PrayerStatus.NOTDONE) date else null
-                }.let {
-                    copyPrayer(it!!, prayer, PrayerStatus.OFFTIME)
+                    if (entry[prayer] == PrayerStatus.NOT_DONE) date else null
+                }!!.let {
+                    assignPrayer(it, prayer, PrayerStatus.OFF_TIME)
                 }
             }
 
