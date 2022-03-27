@@ -2,25 +2,14 @@
 <project version="4">
   <component name="RemoteTargetsManager">
     <targets>
-      <target name="WSL - Ubuntu" type="wsl" uuid="792f4346-e345-4f16-9034-9947d9097181">
+      <target name="WSL - Ubuntu" type="wsl" uuid="d942e326-6253-4f27-92c5-2a3c44a27d4e">
         <config>
           <option name="distributionMsId" value="Ubuntu" />
           <option name="projectRootOnTarget" value="/mnt/c/Users/sheha/AppData/Local/JetBrains/Toolbox/apps/IDEA-U/ch-0/213.7172.25/jbr/bin&#10;/prayers" />
         </config>
         <ContributedStateBase type="JavaLanguageRuntime">
           <config>
-            <option name="homePath" value="/opt/jdk-17" />
-          </config>
-        </ContributedStateBase>
-      </target>
-      <target name="WSL - Ubuntu2" type="wsl" uuid="fac279b5-931e-487d-9dbe-42c17b9fda8f">
-        <config>
-          <option name="distributionMsId" value="Ubuntu" />
-          <option name="projectRootOnTarget" value="/mnt/c/Users/sheha/AppData/Local/JetBrains/Toolbox/apps/IDEA-U/ch-0/213.7172.25/jbr/bin&#10;/prayers" />
-        </config>
-        <ContributedStateBase type="JavaLanguageRuntime">
-          <config>
-            <option name="homePath" value="/opt/jdk-17" />
+            <option name="homePath" value="/home/sellithy/.sdkman/candidates/java/current" />
           </config>
         </ContributedStateBase>
       </target>
