@@ -1,8 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.6.10"
-    kotlin("plugin.serialization") version "1.6.10"
+    kotlin("jvm") version "1.6.21"
+    kotlin("plugin.serialization") version "1.6.21"
     application
 }
 
@@ -11,7 +11,8 @@ repositories {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "11"
+    kotlinOptions.freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn")
 }
 
 application {
@@ -19,8 +20,8 @@ application {
 }
 
 dependencies {
-    implementation("com.github.ajalt.clikt:clikt:3.4.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
+    implementation("com.github.ajalt.clikt:clikt:3.4.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.2")
 }
 

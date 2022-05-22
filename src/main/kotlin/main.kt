@@ -58,6 +58,7 @@ class Hello : CliktCommand() {
         if (size >= 2) throw MutuallyExclusiveGroupException(this)
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun run() {
         ensureCorrectFlags()
         val dateToEntry = Json.decodeFromStream<PrayersFile>(path.inputStream())
