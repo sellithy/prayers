@@ -77,19 +77,22 @@ class Hello : CliktCommand() {
         val defaultedToDay = dayInput ?: if (yesterdayFlag) yesterday else today
         if (prayersInput == null) {
             if (!printFlag) throw UsageError("Must include value for prayers if not printing")
-            throw PrintMessage("$defaultedToDay: ${dateToEntry[defaultedToDay]}")
+            throw PrintMessage(
+                (defaultedToDay.minus(DatePeriod(days = 10))..defaultedToDay)
+                    .joinToString(separator = "\n") { "$it: ${dateToEntry[it]}" }
+            )
         }
 
-        if (!unspecifiedFlag) prayersInput!!.forEach { (prayer, status) ->
-            assignPrayer(defaultedToDay, prayer, status)
-        }
-        else prayersInput!!.forEach { (prayer, _) ->
-            dateToEntry.firstNotNullOfOrNull { (date, entry) ->
-                if (entry[prayer] == PrayerStatus.NOT_DONE) date else null
-            }!!.let {
-                assignPrayer(it, prayer, PrayerStatus.OFF_TIME)
+        if (!unspecifiedFlag)
+            prayersInput!!.forEach { (prayer, status) -> assignPrayer(defaultedToDay, prayer, status) }
+        else
+            prayersInput!!.forEach { (prayer, _) ->
+                dateToEntry.firstNotNullOfOrNull { (date, entry) ->
+                    if (entry[prayer] == PrayerStatus.NOT_DONE) date else null
+                }!!.let {
+                    assignPrayer(it, prayer, PrayerStatus.OFF_TIME)
+                }
             }
-        }
 
         // Write back to file
         prettyJson.encodeToStream(dateToEntry, path.outputStream())
