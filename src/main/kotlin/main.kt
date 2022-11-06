@@ -77,7 +77,7 @@ class Hello : CliktCommand() {
         val defaultedToDay = dayInput ?: if (yesterdayFlag) yesterday else today
         if (prayersInput == null) {
             if (!printFlag) throw UsageError("Must include value for prayers if not printing")
-            throw PrintMessage("$defaultedToDay is ${dateToEntry[defaultedToDay]}")
+            throw PrintMessage("$defaultedToDay: ${dateToEntry[defaultedToDay]}")
         }
 
         if (!unspecifiedFlag) prayersInput!!.forEach { (prayer, status) ->

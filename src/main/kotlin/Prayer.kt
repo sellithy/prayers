@@ -12,3 +12,12 @@ fun Char.toPrayer() = when(lowercaseChar()) {
     'i' -> ISHA
     else -> throw IllegalArgumentException()
 }
+
+val Prayer.asLetter get() = when(this) {
+    FAJR -> 'f'
+    ZUHR -> 'z'
+    ASR -> 'a'
+    MAGHREB -> 'm'
+    ISHA -> 'i'
+
+}
