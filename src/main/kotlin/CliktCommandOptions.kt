@@ -1,6 +1,8 @@
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.PrintMessage
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.convert
+import com.github.ajalt.clikt.parameters.arguments.validate
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.file
@@ -42,3 +44,11 @@ abstract class FilePathSubCommand(help: String = "", name: String? = null, epilo
         (entryFromDate.keys.maxOf { it }.nextDay()..today).forEach { entryFromDate[it] = Entry() }
     }
 }
+
+fun CliktCommand.validatedTypedDate(name: String = "") = typedDate(name = name)
+    .validate {
+        if (it is DateType.Specific && it.date > today) throw PrintMessage("Cannot add a future date", error = true)
+    }
+
+fun CliktCommand.prayers(name: String = "") = argument(name = name, help = helpTexts["prayers"])
+        .convert { input -> input.map { it.toPrayerPair() } }

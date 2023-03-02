@@ -48,13 +48,8 @@ class PrintPrayers :
 }
 
 class SetPrayers : FilePathSubCommand(help = helpTexts["Set_command"], epilog = helpTexts["Set_epilog"], name = "set") {
-    private val dateType: DateType by typedDate(name = "DATE")
-        .validate {
-            if (it is DateType.Specific && it.date > today) throw PrintMessage("Cannot add a future date", error = true)
-        }
-
-    private val prayers: List<Pair<Prayer, PrayerStatus>> by argument(help = helpTexts["Set_prayers"])
-        .convert { input -> input.map { it.toPrayerPair() } }
+    private val dateType by validatedTypedDate()
+    private val prayers by prayers()
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun run() {
@@ -92,6 +87,30 @@ class SetPrayers : FilePathSubCommand(help = helpTexts["Set_command"], epilog = 
     }
 }
 
+class DeletePrayers : FilePathSubCommand(help = helpTexts["Delete_command"], name = "delete") {
+    private val dateType by validatedTypedDate(name = "DATE")
+    private val prayers by prayers()
+
+    @OptIn(ExperimentalSerializationApi::class)
+    override fun run() {
+        super.run()
+        val date = dateType
+
+        if (date is DateType.Unspecified)
+            throw BadParameterValue(date.toString(), "DATE")
+
+        val day = when (date) {
+            is DateType.Today -> today
+            is DateType.Yesterday -> yesterday
+            is DateType.Specific -> date.date
+            is DateType.Unspecified -> throw RuntimeException("Should not be possible")
+        }
+        prayers.forEach { (prayer, _) -> entryFromDate[day] = entryFromDate[day]!!.copy(prayer, PrayerStatus.NOT_DONE) }
+
+        prettyJson.encodeToStream(entryFromDate, path.outputStream())
+    }
+}
+
 fun main(args: Array<String>) {
-    Prayers().subcommands(PrintPrayers(), SetPrayers()).main(args)
+    Prayers().subcommands(PrintPrayers(), SetPrayers(), DeletePrayers()).main(args)
 }
