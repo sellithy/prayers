@@ -19,5 +19,6 @@ val Prayer.asLetter get() = when(this) {
     ASR -> 'a'
     MAGHREB -> 'm'
     ISHA -> 'i'
-
 }
+
+val Char.isValidPrayerLetter get() = lowercaseChar() in arrayOf('f', 'z', 'a', 'm', 'i')
