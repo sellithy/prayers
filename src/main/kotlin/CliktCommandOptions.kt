@@ -41,7 +41,7 @@ abstract class FilePathSubCommand(help: String = "", name: String? = null, epilo
     @OptIn(ExperimentalSerializationApi::class)
     override fun run() {
         entryFromDate = Json.decodeFromStream(path.inputStream())
-        (entryFromDate.keys.maxOf { it }.nextDay()..today).forEach { entryFromDate[it] = Entry() }
+        (entryFromDate.keys.maxOf { it }.nextDay()..today).forEach { entryFromDate[it] = NewEntry() }
     }
 }
 
@@ -51,4 +51,4 @@ fun CliktCommand.validatedTypedDate(name: String = "") = typedDate(name = name)
     }
 
 fun CliktCommand.prayers(name: String = "") = argument(name = name, help = helpTexts["prayers"])
-        .convert { input -> input.map { it.toPrayerPair() } }
+        .convert { input -> input.map { it.toNewPrayerPair() } }

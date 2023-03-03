@@ -3,15 +3,19 @@ import com.github.ajalt.clikt.parameters.arguments.*
 import com.github.ajalt.clikt.parameters.options.*
 import kotlinx.datetime.*
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
+import java.io.File
+import java.nio.file.Files
 
 val prettyJson = Json { prettyPrint = true }
 val helpTexts = "help_texts.properties".asProperties
 val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
 val yesterday = today - DatePeriod(days = 1)
 
-typealias PrayersFile = LinkedHashMap<LocalDate, Entry>
+typealias PrayersFile = LinkedHashMap<LocalDate, NewEntry>
 
 class Prayers : NoOpCliktCommand() {
     override fun aliases(): Map<String, List<String>> = mapOf(
@@ -56,7 +60,7 @@ class SetPrayers : FilePathSubCommand(help = helpTexts["Set_command"], epilog = 
         super.run()
         val date = dateType
 
-        fun assignPrayer(day: LocalDate, prayer: Prayer, status: PrayerStatus) {
+        fun assignPrayer(day: LocalDate, prayer: Prayer, status: NewPrayerStatus) {
             entryFromDate[day] = entryFromDate[day]!!.copy(prayer, status)
         }
 
@@ -64,9 +68,9 @@ class SetPrayers : FilePathSubCommand(help = helpTexts["Set_command"], epilog = 
             prayers.forEach { (prayer, _) ->
                 // This only works because we know that the map is sorted by date because it's a LinkedHashMap
                 entryFromDate.firstNotNullOfOrNull { (date, entry) ->
-                    if (entry[prayer] == PrayerStatus.NOT_DONE) date else null
+                    if (entry[prayer] == NewPrayerStatus.NotDone) date else null
                 }?.let {
-                    assignPrayer(it, prayer, PrayerStatus.OFF_TIME)
+                    assignPrayer(it, prayer, NewPrayerStatus.OffTime)
                 } ?: throw PrintMessage(
                     "Cannot Set an unspecified prayer because all past days are filled",
                     error = true
@@ -105,12 +109,19 @@ class DeletePrayers : FilePathSubCommand(help = helpTexts["Delete_command"], nam
             is DateType.Specific -> date.date
             is DateType.Unspecified -> throw RuntimeException("Should not be possible")
         }
-        prayers.forEach { (prayer, _) -> entryFromDate[day] = entryFromDate[day]!!.copy(prayer, PrayerStatus.NOT_DONE) }
+        prayers.forEach { (prayer, _) ->
+            entryFromDate[day] = entryFromDate[day]!!.copy(prayer, NewPrayerStatus.NotDone)
+        }
 
         prettyJson.encodeToStream(entryFromDate, path.outputStream())
     }
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 fun main(args: Array<String>) {
     Prayers().subcommands(PrintPrayers(), SetPrayers(), DeletePrayers()).main(args)
+//    val path = "/Users/shehabellithy/bin/test.txt"
+//    val prayersFile = prettyJson.decodeFromStream<PrayersFile>(File(path).inputStream())
+//    prayersFile[today] = prayersFile[today]!!.copy(Prayer.FAJR, NewPrayerStatus.Unspecified(today))
+//    println(prettyJson.encodeToString(prayersFile))
 }
