@@ -70,12 +70,13 @@ class SetPrayers : FilePathSubCommand(help = helpTexts["Set_command"], epilog = 
                 entryFromDate.firstNotNullOfOrNull { (date, entry) ->
                     if (entry[prayer] == NewPrayerStatus.NotDone) date else null
                 }?.let {
-                    assignPrayer(it, prayer, NewPrayerStatus.OffTime)
+                    assignPrayer(it, prayer, NewPrayerStatus.Unspecified(null))
                 } ?: throw PrintMessage(
                     "Cannot Set an unspecified prayer because all past days are filled",
                     error = true
                 )
             }
+            prettyJson.encodeToStream(entryFromDate, path.outputStream())
             return
         }
 
