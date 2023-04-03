@@ -16,7 +16,6 @@ import java.io.File
 sealed class DateType {
     object Yesterday : DateType()
     object Today : DateType()
-    object Unspecified : DateType()
     data class Specific(val date: LocalDate) : DateType()
 }
 
@@ -26,7 +25,6 @@ fun CliktCommand.typedDate(name: String = "") = argument(help = helpTexts["dateT
 fun String.toDateType() = when (this) {
     "today", "t" -> DateType.Today
     "yesterday", "y" -> DateType.Yesterday
-    "unspecified", "u" -> DateType.Unspecified
     else -> DateType.Specific(toLocalDate())
 }
 

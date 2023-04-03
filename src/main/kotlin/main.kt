@@ -1,14 +1,13 @@
-import com.github.ajalt.clikt.core.*
+import com.github.ajalt.clikt.core.NoOpCliktCommand
+import com.github.ajalt.clikt.core.PrintMessage
+import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.*
-import com.github.ajalt.clikt.parameters.options.*
+import com.github.ajalt.clikt.parameters.options.convert
+import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.datetime.*
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
-import java.io.File
-import java.nio.file.Files
 
 val prettyJson = Json { prettyPrint = true }
 val helpTexts = "help_texts.properties".asProperties
@@ -53,40 +52,36 @@ class PrintPrayers :
 
 class SetPrayers : FilePathSubCommand(help = helpTexts["Set_command"], epilog = helpTexts["Set_epilog"], name = "set") {
     private val dateType by validatedTypedDate()
-    private val prayers by prayers()
+    private val prayers by prayers().optional()
+
+    private val unspecifiedPrayers: List<Prayer>? by option(
+        "-u", "--unspecified",
+        help = helpTexts["Set_unspecified"]
+    ).convert { it.map { it.toPrayer() } }
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun run() {
         super.run()
-        val date = dateType
 
-        fun assignPrayer(day: LocalDate, prayer: Prayer, status: NewPrayerStatus) {
-            entryFromDate[day] = entryFromDate[day]!!.copy(prayer, status)
-        }
-
-        if (date is DateType.Unspecified) {
-            prayers.forEach { (prayer, _) ->
-                // This only works because we know that the map is sorted by date because it's a LinkedHashMap
-                entryFromDate.firstNotNullOfOrNull { (date, entry) ->
-                    if (entry[prayer] == NewPrayerStatus.NotDone) date else null
-                }?.let {
-                    assignPrayer(it, prayer, NewPrayerStatus.Unspecified(null))
-                } ?: throw PrintMessage(
-                    "Cannot Set an unspecified prayer because all past days are filled",
-                    error = true
-                )
-            }
-            prettyJson.encodeToStream(entryFromDate, path.outputStream())
-            return
-        }
-
-        val day = when (date) {
+        val day = when (val date = dateType) {
             is DateType.Today -> today
             is DateType.Yesterday -> yesterday
             is DateType.Specific -> date.date
-            is DateType.Unspecified -> throw RuntimeException("Should not be possible")
         }
-        prayers.forEach { (prayer, status) -> entryFromDate[day] = entryFromDate[day]!!.copy(prayer, status) }
+
+        unspecifiedPrayers?.forEach { prayer ->
+            // This only works because we know that the map is sorted by date because it's a LinkedHashMap
+            entryFromDate.firstNotNullOfOrNull { (date, entry) ->
+                if (entry[prayer] == NewPrayerStatus.NotDone) date else null
+            }?.let {
+                entryFromDate[it] = entryFromDate[it]!!.copy(prayer, NewPrayerStatus.Unspecified(day))
+            } ?: throw PrintMessage(
+                "Cannot Set an unspecified prayer because all past days are filled",
+                error = true
+            )
+        }
+
+        prayers?.forEach { (prayer, status) -> entryFromDate[day] = entryFromDate[day]!!.copy(prayer, status) }
 
         prettyJson.encodeToStream(entryFromDate, path.outputStream())
     }
@@ -99,16 +94,11 @@ class DeletePrayers : FilePathSubCommand(help = helpTexts["Delete_command"], nam
     @OptIn(ExperimentalSerializationApi::class)
     override fun run() {
         super.run()
-        val date = dateType
 
-        if (date is DateType.Unspecified)
-            throw BadParameterValue(date.toString(), "DATE")
-
-        val day = when (date) {
+        val day = when (val date = dateType) {
             is DateType.Today -> today
             is DateType.Yesterday -> yesterday
             is DateType.Specific -> date.date
-            is DateType.Unspecified -> throw RuntimeException("Should not be possible")
         }
         prayers.forEach { (prayer, _) ->
             entryFromDate[day] = entryFromDate[day]!!.copy(prayer, NewPrayerStatus.NotDone)
